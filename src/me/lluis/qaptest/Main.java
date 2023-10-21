@@ -7,33 +7,50 @@ import me.lluis.qaptest.qap.SKQAP;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class Main {
 
+    private static final Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
+
     public static void main(String[] args) {
-        Map<Map.Entry<Character, Character>, Integer> frequencies = new HashMap<>();
+        Map<String, Integer> frequencies = new HashMap<>();
 
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Enter words to compute frequencies");
+        System.out.println("Enter a frequency next to each word");
         System.out.println("Enter an empty line to finish");
 
-        while (scanner.hasNext()) {
-            String word = scanner.next();
-            word = word.toUpperCase();
-
-            for (int i = 0; i < word.length() - 1; ++i) {
-                char c1 = word.charAt(i);
-                char c2 = word.charAt(i + 1);
-
-                Map.Entry<Character, Character> pair = Map.entry(c1, c2);
-
-                frequencies.put(pair, frequencies.getOrDefault(pair, 0) + 1);
+        boolean debug = false;
+        while (scanner.hasNext() && !debug) {
+            if (frequencies.size() > 4600) {
+                debug = true;
             }
+
+            String word = scanner.next();
+
+            if (!pattern.matcher(word).find()) continue;
+
+            word = word.toUpperCase();
+            int freq = scanner.nextInt();
+
+            if (word.contains("-")) {
+                String[] parts = word.split("-");
+                for (String part : parts) {
+                    frequencies.compute(part, (k, v) -> v == null ? freq : v + freq);
+                }
+                continue;
+            }
+
+            frequencies.compute(word, (k, v) -> v == null ? freq : v + freq);
         }
+
+        System.out.println(frequencies.size());
 
         SKQAP skqap = new SKQAP(10, 100, 6, 6, frequencies);
         skqap.solve();
+
+        System.out.println("Finished calculating");
     }
 
     private static void solveQAP() {

@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class Keyboard {
 
-    private int[][] layout;
+    private final int[][] layout;
     private double calculatedCost;
 
     public Keyboard(int q, int p) {
@@ -14,6 +14,17 @@ public class Keyboard {
                 layout[i][j] = -1;
             }
         }
+    }
+
+    public Keyboard(Keyboard keyboard) {
+        int[][] tmp = keyboard.getLayout();
+        layout = new int[tmp.length][tmp[0].length];
+
+        for (int i = 0; i < tmp.length; ++i) {
+            System.arraycopy(tmp[i], 0, layout[i], 0, tmp[i].length);
+        }
+
+        calculatedCost = keyboard.getCost();
     }
 
     public void put(int i, int j, int value) {
@@ -36,34 +47,18 @@ public class Keyboard {
         return calculatedCost;
     }
 
-    public double calculateCost(Map<Map.Entry<Character, Character>, Integer> frequencies) {
+    public void setCost(double cost) {
+        this.calculatedCost = cost;
+    }
+
+    public void calculateCost(Map<String, Integer> frequencies) {
         double cost = 0.0;
 
-        for (int i = 0; i < layout.length; ++i) {
-            for (int j = 0; j < layout[i].length; ++j) {
-                if (layout[i][j] == -1) continue;
-
-                for (int k = 0; k < layout.length; ++k) {
-                    for (int l = 0; l < layout[k].length; ++l) {
-                        if (layout[k][l] == -1) continue;
-
-                        char c1 = (char) layout[i][j];
-                        char c2 = (char) layout[k][l];
-
-                        int freq = frequencies.getOrDefault(Map.entry(c1, c2), 1);
-
-                        if (c1 == c2) {
-                            cost += 0.142 * freq;
-                        };
-
-                        double distance = Math.sqrt(Math.pow(i - k, 2) + Math.pow(j - l, 2));
-                        cost  += (double) freq * 1/4.9 * Math.log(distance + 1); // Fitts' law
-                    }
-                }
-            }
+        for (String word : frequencies.keySet()) {
+            cost += frequencies.get(word) * calculateWordDistance(word);
         }
-        calculatedCost = cost;
-        return cost;
+
+        calculatedCost = cost / frequencies.size();
     }
 
     public void print() {
@@ -74,5 +69,34 @@ public class Keyboard {
             }
             System.out.println();
         }
+    }
+
+    private double calculateWordDistance(String word) {
+        double distance = 0.0;
+        for (int i = 0; i < word.length() - 1; ++i) {
+            char c1 = word.charAt(i);
+            char c2 = word.charAt(i + 1);
+
+            if (c1 == c2) continue;
+
+            int[] pos1 = findChar(c1);
+            int[] pos2 = findChar(c2);
+
+            if (pos1 == null || pos2 == null) throw new RuntimeException("Character not found");
+
+            distance += Math.sqrt(Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[1] - pos2[1], 2));
+        }
+
+        return distance;
+    }
+
+    private int[] findChar(char c) {
+        for (int i = 0; i < layout.length; ++i) {
+            for (int j = 0; j < layout[0].length; ++j) {
+                if (layout[i][j] == c) return new int[] {i, j};
+            }
+        }
+
+        return null;
     }
 }
