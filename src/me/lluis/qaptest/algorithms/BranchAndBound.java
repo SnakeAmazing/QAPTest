@@ -1,11 +1,16 @@
 package me.lluis.qaptest.algorithms;
 
+import me.lluis.qaptest.object.CharPair;
+import me.lluis.qaptest.object.Pair;
+
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class BranchAndBound {
 
-    private int n;
+    private final int n;
     private int[][] distanceMatrix;
     private int[][] flowMatrix;
 
@@ -25,7 +30,6 @@ public class BranchAndBound {
     public void solve() {
         int[] currentAssignment = new int[n];
         boolean[] alreadyInAssignment = new boolean[n];
-        Arrays.fill(alreadyInAssignment, false);
 
         recursive_tree_exploration(0, 0, currentAssignment, alreadyInAssignment);
     }
@@ -35,7 +39,7 @@ public class BranchAndBound {
             if (currentCost < currentBestCost) {
                 currentBestCost = currentCost;
                 currentBestAssignment = currentAssigment.clone();
-                //System.out.println("New best solution: " + Arrays.toString(currentBestAssignment) + " with cost " + currentBestCost);
+                System.out.println("New best solution: " + Arrays.toString(currentBestAssignment) + " with cost " + currentBestCost);
             }
         } else if (currentSize == 0) {
             for (int i = 0; i < n; ++i) {

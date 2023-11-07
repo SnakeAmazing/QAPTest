@@ -47,7 +47,7 @@ public class Main {
         int n;
         int[][] distances;
         int[][] flows;
-        try (Scanner scanner = new Scanner(new File("resources/chr12b.txt"))) {
+        try (Scanner scanner = new Scanner(new File("resources/chr20b.txt"))) {
             n = scanner.nextInt();
 
             distances = new int[n][n];
