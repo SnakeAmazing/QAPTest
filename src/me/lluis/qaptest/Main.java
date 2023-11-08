@@ -1,9 +1,11 @@
 package me.lluis.qaptest;
 
 import me.lluis.qaptest.algorithms.BranchAndBound;
+import me.lluis.qaptest.algorithms.specific.SKBranchAndBound;
 import me.lluis.qaptest.input.FileInput;
 import me.lluis.qaptest.input.Input;
 import me.lluis.qaptest.input.ManualInput;
+import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.qap.QAP;
 import me.lluis.qaptest.qap.SKQAP;
 
@@ -19,35 +21,39 @@ public class Main {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
 
     public static void main(String[] args) {
-        solveQAP();
-        /*Map<String, Integer> wordFrequencies = new HashMap<>();
-        Map<Character, Integer> letterFrequencies = new HashMap<>();
+        //solveQAP();
+        solveSKQAP();
+    }
 
+    private static void solveSKQAP() {
+        int n;
+
+        Map<String, Integer> wordFrequencies = new HashMap<>();
         Input input = new ManualInput(wordFrequencies);
-        Input input2 = new FileInput();
-
         input.computeFrequencies();
-        input2.computeFrequencies();
 
-        for (String word : wordFrequencies.keySet()) {
-            for (char c : word.toCharArray()) {
+        SKBranchAndBound skBranchAndBound = new SKBranchAndBound(6, wordFrequencies);
+        long begin = System.currentTimeMillis();
+        skBranchAndBound.solve();
+        long end = System.currentTimeMillis();
 
-                if (letterFrequencies.containsKey(c)) letterFrequencies.put(c, letterFrequencies.get(c) + 1);
-                else letterFrequencies.put(c, 1);
-            }
+        char[] bestAssignment = skBranchAndBound.getCurrentBestAssignment();
+        double cost = skBranchAndBound.getCurrentBestCost();
+
+        System.out.println("The best solution is: ");
+        for (int i = 0; i < Alphabet.latinAlphabet().size(); ++i) {
+            System.out.print(bestAssignment[i] + " ");
         }
+        System.out.println("\nWith cost: " + cost);
 
-        SKQAP skqap = new SKQAP(6, 6, wordFrequencies, letterFrequencies);
-        skqap.solve();
-
-        System.out.println("Finished calculating");*/
+        System.out.println("Time elapsed: " + (end - begin) + "ms");
     }
 
     private static void solveQAP() {
         int n;
         int[][] distances;
         int[][] flows;
-        try (Scanner scanner = new Scanner(new File("resources/chr20b.txt"))) {
+        try (Scanner scanner = new Scanner(new File("resources/chr12a.txt"))) {
             n = scanner.nextInt();
 
             distances = new int[n][n];
@@ -69,8 +75,8 @@ public class Main {
             return;
         }
 
-        long begin = System.currentTimeMillis();
         BranchAndBound branchAndBound = new BranchAndBound(n, distances, flows);
+        long begin = System.currentTimeMillis();
         branchAndBound.solve();
         long end = System.currentTimeMillis();
 
