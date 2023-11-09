@@ -26,7 +26,7 @@ public class Main {
     }
 
     private static void solveSKQAP() {
-        int n;
+
 
         Map<String, Integer> wordFrequencies = new HashMap<>();
         Input input = new ManualInput(wordFrequencies);

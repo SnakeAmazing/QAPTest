@@ -3,14 +3,24 @@ package me.lluis.qaptest.algorithms.specific;
 import me.lluis.qaptest.algorithms.HungarianAlgorithm;
 import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.object.CharPair;
+import me.lluis.qaptest.vector.Vector;
 
 import java.util.*;
+
+
+// Cost?
+// lower cote
+// distancia entre tecles?
+// tamanay tecles?
+// tamany matriu?
+//
 
 public class SKBranchAndBound {
 
     private final List<Character> letters = Alphabet.latinAlphabet();
 
     private final int n;
+
     private int[][] distanceMatrix;
     private int[][] flowMatrix;
 
@@ -29,23 +39,23 @@ public class SKBranchAndBound {
         this.pairFrequencies = new HashMap<>();
 
         createDistanceMatrix();
-        wordFreq2PairFreq();
+        //wordFreq2PairFreq();
 
-        generateInitialSolution();
+        //generateInitialSolution();
     }
 
     public void solve() {
         char[] currentAssignment = new char[n];
         boolean[] alreadyInAssignment = new boolean[n];
 
-        /*for (int i = 0; i < n; ++i) {
+        for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
                 System.out.print(distanceMatrix[i][j] + " ");
             }
             System.out.println();
         }
         System.out.println();
-
+        /*
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
                 System.out.print(flowMatrix[i][j] + " ");
@@ -60,14 +70,19 @@ public class SKBranchAndBound {
 
         System.out.println("\nStarting computation...");
 
-        treeExploration(0, 0, currentAssignment, alreadyInAssignment);
+        //treeExploration(0, 0, currentAssignment, alreadyInAssignment);
     }
 
     private void createDistanceMatrix() {
         distanceMatrix = new int[n][n];
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
-                distanceMatrix[i][j] = Math.abs(i - j);
+                Vector v1 = new Vector(i, j);
+                for (int z = 0; z < n; ++z) {
+                    Vector v2 = new Vector(j, z);
+                    // Euclidian distance
+                    distanceMatrix[i][z] = (int) Vector.calculateDistance(v1, v2);
+                }
             }
         }
     }

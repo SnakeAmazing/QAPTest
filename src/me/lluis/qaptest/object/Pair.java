@@ -33,7 +33,8 @@ public class Pair<T, U> {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Pair<?, ?> pair)) return false;
+        if (!(obj instanceof Pair)) return false;
+        Pair<?, ?> pair = (Pair<?, ?>) obj;
         return first.equals(pair.first) && second.equals(pair.second);
     }
 
