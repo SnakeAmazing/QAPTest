@@ -42,11 +42,11 @@ public class Vector {
      * @param b the second vector
      * @return the Euclidean distance between two vectors
      */
-    public static double calculateDistance(Vector a, Vector b) {
-        double x = Math.pow(a.getX() - b.getX(), 2);
-        double y = Math.pow(a.getY() - b.getY(), 2);
+    public static int calculateDistance(Vector a, Vector b) {
+        double x = Math.pow(b.getX() - a.getX(), 2);
+        double y = Math.pow(b.getY() - a.getY(), 2);
 
-        return Math.round(Math.sqrt(x + y) * 100.0) / 100.0;
+        return (int) (Math.round(Math.sqrt(x + y) * 100.0) / 100.0);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package me.lluis.qaptest.input;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class ManualInput implements Input {
@@ -58,6 +59,8 @@ public class ManualInput implements Input {
         System.out.println("Introdueix el text");
         while (scanner.hasNext()) {
             String word = scanner.next();
+
+            if (Objects.equals(word, "eof")) break;
 
             if (!word.matches("^[a-zA-Z]+$")) continue;
 

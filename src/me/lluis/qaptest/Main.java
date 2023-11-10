@@ -32,7 +32,7 @@ public class Main {
         Input input = new ManualInput(wordFrequencies);
         input.computeFrequencies();
 
-        SKBranchAndBound skBranchAndBound = new SKBranchAndBound(6, wordFrequencies);
+        SKBranchAndBound skBranchAndBound = new SKBranchAndBound(4, 8, wordFrequencies);
         long begin = System.currentTimeMillis();
         skBranchAndBound.solve();
         long end = System.currentTimeMillis();
