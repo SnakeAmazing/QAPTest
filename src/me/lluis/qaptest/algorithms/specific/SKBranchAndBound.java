@@ -291,7 +291,7 @@ public class SKBranchAndBound {
     private void computeCost() {
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
-                double cost = distanceMatrix[currentBestAssignment[i] - 'A'][currentBestAssignment[j] - 'A'];
+                double cost = distanceMatrix[i][j];
                 int freq = flowMatrix[currentBestAssignment[i] - 'A'][currentBestAssignment[j] - 'A'];
 
                 currentBestCost += cost * freq;
@@ -301,6 +301,8 @@ public class SKBranchAndBound {
 
     /**
      * Computes the frequencies of pairs of letters and stores it in the flow matrix
+     *
+     * Possible test: The same pair but inverted should be counted as the same pair. p.e "AB" and "BA" should be counted as the same pair
      */
     private void computeFrequencies() {
         flowMatrix = new int[n][n];
@@ -311,8 +313,13 @@ public class SKBranchAndBound {
 
                 CharPair pair = new CharPair(c, c2);
                 pairFrequencies.compute(pair, (k, v) -> v == null ? 1 : v + 1);
-                flowMatrix[c - 'A'][c2 - 'A'] += 1;
             }
+        }
+
+        for (CharPair pair : pairFrequencies.keySet()) {
+            int freq = pairFrequencies.get(pair);
+            flowMatrix[pair.getFirst() - 'A'][pair.getSecond() - 'A'] = freq;
+            flowMatrix[pair.getSecond() - 'A'][pair.getFirst() - 'A'] = freq;
         }
     }
 
