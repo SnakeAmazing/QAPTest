@@ -1,5 +1,7 @@
 package me.lluis.qaptest.object;
 
+import java.util.Objects;
+
 public class Pair<T, U> {
 
     private T first;
@@ -33,13 +35,19 @@ public class Pair<T, U> {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null) return false;
         if (!(obj instanceof Pair)) return false;
-        Pair<?, ?> pair = (Pair<?, ?>) obj;
-        return first.equals(pair.first) && second.equals(pair.second);
+
+        Pair<T, U> pair = (Pair<T, U>) obj;
+
+        return (first.equals(pair.first) && second.equals(pair.second)) ||
+                (first.equals(pair.second) && second.equals(pair.first));
+
     }
 
     @Override
     public int hashCode() {
-        return first.hashCode() + second.hashCode();
+        return Objects.hash(first, second);
     }
 }

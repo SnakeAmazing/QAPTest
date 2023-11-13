@@ -153,7 +153,7 @@ public class BranchAndBound {
         }
 
         HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g);
-        int lap = hungarianAlgorithm.findOptimalAssignment();
+        int lap = hungarianAlgorithm.compute();
 
         return currentCost + lap;
     }

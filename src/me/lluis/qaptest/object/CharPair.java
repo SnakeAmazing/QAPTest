@@ -1,14 +1,56 @@
 package me.lluis.qaptest.object;
 
-public class CharPair extends Pair<Character, Character> {
+import java.util.Objects;
 
-    public CharPair(Character first, Character second) {
-        super(first, second);
+public class CharPair {
+
+    private char first;
+    private char second;
+
+    public CharPair(char first, char second) {
+        if (first >= second) {
+            this.first = first;
+            this.second = second;
+        } else {
+            this.first = second;
+            this.second = first;
+        }
+
     }
 
-    public CharPair(String pair) {
-        super(pair.charAt(0), pair.charAt(1));
+    public char getFirst() {
+        return first;
     }
 
+    public char getSecond() {
+        return second;
+    }
 
+    public void setFirst(char first) {
+        this.first = first;
+    }
+
+    public void setSecond(char second) {
+        this.second = second;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CharPair)) return false;
+
+        CharPair pair = (CharPair) obj;
+
+        return (pair.getFirst() == first && pair.getSecond() == second)
+                || (pair.getFirst() == second && pair.getSecond() == first);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(first, second);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + first + ", " + second + ")";
+    }
 }

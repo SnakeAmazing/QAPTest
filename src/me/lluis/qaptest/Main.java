@@ -7,7 +7,6 @@ import me.lluis.qaptest.input.Input;
 import me.lluis.qaptest.input.ManualInput;
 import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.qap.QAP;
-import me.lluis.qaptest.qap.SKQAP;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,11 +21,54 @@ public class Main {
 
     public static void main(String[] args) {
         //solveQAP();
+        //solveQAP2();
         solveSKQAP();
     }
 
-    private static void solveSKQAP() {
+    private static void solveQAP2() {
+        int n;
+        int[][] distances;
+        int[][] flows;
+        try (Scanner scanner = new Scanner(new File("resources/chr12a.txt"))) {
+            n = scanner.nextInt();
 
+            distances = new int[n][n];
+            flows = new int[n][n];
+
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    distances[i][j] = scanner.nextInt();
+                }
+            }
+
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    flows[i][j] = scanner.nextInt();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        QAP qap = new QAP(n, distances, flows);
+        long begin = System.currentTimeMillis();
+        qap.solve();
+        long end = System.currentTimeMillis();
+
+        int[] bestAssignment = qap.getCurrentBestAssignment();
+        int cost = qap.getCurrentBestCost();
+
+        System.out.println("The best solution is: ");
+        for (int i = 0; i < n; ++i) {
+            System.out.print(bestAssignment[i] + 1 + " ");
+        }
+        System.out.println("\nWith cost: " + cost);
+
+        System.out.println("Time elapsed: " + (end - begin) + "ms");
+    }
+
+    private static void solveSKQAP() {
 
         Map<String, Integer> wordFrequencies = new HashMap<>();
         Input input = new ManualInput(wordFrequencies);
@@ -41,8 +83,8 @@ public class Main {
         double cost = skBranchAndBound.getCurrentBestCost();
 
         System.out.println("The best solution is: ");
-        for (int i = 0; i < Alphabet.latinAlphabet().size(); ++i) {
-            System.out.print(bestAssignment[i] + " ");
+        for (char c : bestAssignment) {
+            System.out.print(c + " ");
         }
         System.out.println("\nWith cost: " + cost);
 

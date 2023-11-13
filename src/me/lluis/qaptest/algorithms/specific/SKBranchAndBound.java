@@ -3,16 +3,9 @@ package me.lluis.qaptest.algorithms.specific;
 import me.lluis.qaptest.algorithms.HungarianAlgorithm;
 import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.object.CharPair;
+import me.lluis.qaptest.util.Utils;
 
 import java.util.*;
-
-
-// Cost?
-// lower cote
-// distancia entre tecles?
-// tamanay tecles?
-// tamany matriu?
-//
 
 public class SKBranchAndBound {
 
@@ -66,29 +59,14 @@ public class SKBranchAndBound {
         char[] currentAssignment = new char[n];
         boolean[] alreadyInAssignment = new boolean[n];
 
-        /*for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < n; ++j) {
-                System.out.print(distanceMatrix[i][j] + " ");
-            }
-            System.out.println();
-        }
-        System.out.println();
-        /*
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < n; ++j) {
-                System.out.print(flowMatrix[i][j] + " ");
-            }
-            System.out.println();
-        }
-        System.out.println();
+        //Utils.printMatrix(distanceMatrix);
+        //Utils.printMatrix(flowMatrix);
 
-        */
         System.out.println(Arrays.toString(currentBestAssignment));
         System.out.println("Cost = " + currentBestCost);
 
         System.out.println("\nStarting computation...");
-
-        treeExploration(0, 0, currentAssignment, alreadyInAssignment);
+        //treeExploration(0, 0, currentAssignment, alreadyInAssignment);
     }
 
     /**
@@ -115,7 +93,7 @@ public class SKBranchAndBound {
                 double B = 10 / 49.0;
                 double movement = B * Math.log((euclideanDistance / keySize) + 1) / Math.log(2);
 
-                distanceMatrix[i][j] = (int) (movement * 10);
+                distanceMatrix[i][j] = movement;
             }
         }
     }
@@ -160,7 +138,7 @@ public class SKBranchAndBound {
                     currentAssigment[currentSize] = letters.get(i);
                     alreadyInAssignment[i] = true;
 
-                    int costIncrease = 0;
+                    double costIncrease = 0.0;
                     for (int j = 0; j < currentSize; ++j) {
                         costIncrease += distanceMatrix[currentSize][j] * flowMatrix[i][currentAssigment[j] - 'A'];
                         costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j] - 'A'][i];
@@ -196,6 +174,8 @@ public class SKBranchAndBound {
 
         int row = 0;
         int col;
+
+        // C1
         for (int i = currentSize; i < n; ++i) {
             col = 0;
             for (int j = currentSize; j < n; ++j) {
@@ -207,7 +187,7 @@ public class SKBranchAndBound {
                 }
             }
 
-            Arrays.sort(tempDistanceMatrix[row]); // CHECK THIS
+            Arrays.sort(tempDistanceMatrix[row]);
             ++row;
         }
 
@@ -241,7 +221,7 @@ public class SKBranchAndBound {
         for (int i = 0; i < remainingSize; ++i) {
             for (int j = 0; j < remainingSize; ++j) {
                 for (int k = 0; k < remainingSize - 1; ++k) {
-                    min[i][j] += tempDistanceMatrix[j][k] * tempFlowMatrix[i][k];
+                    min[i][j] += (int) (tempDistanceMatrix[j][k] * tempFlowMatrix[i][k]);
                 }
             }
         }
@@ -256,7 +236,7 @@ public class SKBranchAndBound {
         }
 
         HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g);
-        int cost = hungarianAlgorithm.findOptimalAssignment();
+        int cost = hungarianAlgorithm.compute();
 
         return currentCost + cost;
     }
@@ -301,7 +281,6 @@ public class SKBranchAndBound {
 
     /**
      * Computes the frequencies of pairs of letters and stores it in the flow matrix
-     *
      * Possible test: The same pair but inverted should be counted as the same pair. p.e "AB" and "BA" should be counted as the same pair
      */
     private void computeFrequencies() {
@@ -311,8 +290,14 @@ public class SKBranchAndBound {
                 char c = word.charAt(i);
                 char c2 = word.charAt(i + 1);
 
+                if (c == c2) continue;
+
                 CharPair pair = new CharPair(c, c2);
-                pairFrequencies.compute(pair, (k, v) -> v == null ? 1 : v + 1);
+                if (pairFrequencies.containsKey(pair)) {
+                    pairFrequencies.put(pair, pairFrequencies.get(pair) + 1);
+                } else {
+                    pairFrequencies.put(pair, 1);
+                }
             }
         }
 

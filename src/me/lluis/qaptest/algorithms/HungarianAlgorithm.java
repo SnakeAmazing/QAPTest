@@ -1,171 +1,188 @@
 package me.lluis.qaptest.algorithms;
+import me.lluis.qaptest.object.Pair;
+
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * Implementation of the Hungarian Algorithm
+ * By Lluis
+ */
 public class HungarianAlgorithm {
 
     private final int n; // Matrix size
-    private final int[][] matrix; // Matrix computed from the BranchAndBound algorithm
+    // Rows of the matrix represent the facilities
+    // Columns of the matrix represent the locations
+    private int[][] matrix; // Matrix computed from the BranchAndBound algorithm
 
-    private final int[] squareInRow;
-    private final int[] squareInCol;
-    private final int[] rowIsCovered;
-    private final int[] colIsCovered;
-    private final int[] staredZeroesInRow;
+    private final int[] zerosInRow; // The position where a zero is marked in the rows
+    private final int[] zerosInColumn; // The position where a zero is marked in the columns
+    private final boolean[] rowIsCovered; // Indicates whether a row is covered
+    private final boolean[] colIsCovered; // Indicates whether a column is covered
+    private final int[] starredZeroesInRow; // Storage for the 0
 
     public HungarianAlgorithm(int[][] matrix) {
-        this.n = matrix.length;
-        if (n != matrix[0].length) {
-            try {
-                throw new IllegalAccessException("You must provide a square matrix.");
-            } catch (IllegalAccessException ex) {
-                System.exit(1);
-            }
-        }
+        checkIfSquared(matrix);
 
-        this.matrix = matrix;
-        squareInRow = new int[n];    // squareInRow & squareInCol indicate the position
-        squareInCol = new int[n];    // of the marked zeroes
+        n = matrix.length;
 
-        rowIsCovered = new int[n];   // indicates whether a row is covered
-        colIsCovered = new int[n];   // indicates whether a column is covered
-        staredZeroesInRow = new int[n]; // storage for the 0
+        zerosInRow = new int[n];    // squareInRow & squareInCol indicate the position
+        zerosInColumn = new int[n];    // of the marked zeroes
 
-        Arrays.fill(staredZeroesInRow, -1);
-        Arrays.fill(squareInRow, -1);
-        Arrays.fill(squareInCol, -1);
+        rowIsCovered = new boolean[n];   // indicates whether a row is covered
+        colIsCovered = new boolean[n];   // indicates whether a column is covered
+        starredZeroesInRow = new int[n]; // storage for the 0
+
+        Arrays.fill(starredZeroesInRow, -1);
+        Arrays.fill(zerosInRow, -1);
+        Arrays.fill(zerosInColumn, -1);
     }
 
     /**
-     * find an optimal assignment
+     * Compute the matrix to find an optimal assigment for the problem
      *
-     * @return optimal assignment
+     * @return the cost of the assigment
      */
-    public int findOptimalAssignment() {
+    public int compute() {
         reduceMatrix();
-        zeroCover();    // mark independent zeroes
-        checkColumnsWithZero();    // cover columns which contain a marked zero
+        coverZeros();
 
         while (!allColumnsAreCovered()) {
-            int[] mainZero = zZeroMark();
-            while (mainZero == null) {  // while no zero found
+            Pair<Integer, Integer> primedZero = primeZero();
+
+            while (primedZero == null) {  // while no zero found
                 subtractMinimum();
-                mainZero = zZeroMark();
+                primedZero = primeZero();
             }
-            if (squareInRow[mainZero[0]] == -1) {
-                // there is no square mark in the mainZero line
-                kChain(mainZero);
+
+            if (zerosInRow[primedZero.getFirst()] == -1) {
+                // there is no zero marked in the row of the zero found
+                kChain(primedZero);
                 checkColumnsWithZero();    // cover columns which contain a marked zero
             } else {
-                // there is square mark in the mainZero line
-                rowIsCovered[mainZero[0]] = 1;  // cover row of mainZero
-                colIsCovered[squareInRow[mainZero[0]]] = 0;  // uncover column of mainZero
+                // there is a starred zero in the row of the zero found
+
+                rowIsCovered[primedZero.getFirst()] = true;  // Cover the row of the zero found
+                colIsCovered[zerosInRow[primedZero.getFirst()]] = false;  // Uncover the column of the zero found
                 subtractMinimum();
             }
         }
 
         int cost = 0;
-        for (int i = 0; i < squareInCol.length; ++i) {
-            cost += matrix[i][squareInCol[i]];
+        for (int i = 0; i < zerosInColumn.length; ++i) {
+            cost += matrix[i][zerosInColumn[i]];
         }
 
         return cost;
     }
 
     /**
-     * Check if all columns are covered. If that's the case then the
-     * optimal solution is found
+     * Check if all columns are covered
+     * If all of them are covered, then we have found an optimal solution
      *
      * @return true or false weather all columns are covered
      */
     private boolean allColumnsAreCovered() {
-        for (int i : colIsCovered) {
-            if (i == 0) {
-                return false;
-            }
+        for (boolean i : colIsCovered) {
+            if (!i) return false;
         }
+
         return true;
     }
 
     /**
-     * Reduce the matrix so that in each row and column at least one zero exists:
-     * 1. subtract each row minima from each element of the row
-     * 2. subtract each column minima from each element of the column
+     * Reduce the matrix by doing the following:
+     * 1. Find and subtract the minimum value of each row from each element of the row
+     * 2. Find and subtract the minimum value of each column from each element of the column
+     * Results in a matrix which at least has one zero in each row and column
      */
     private void reduceMatrix() {
+        // Find min element from each row
         for (int i = 0; i < matrix.length; i++) {
-            int currentRowMin = Integer.MAX_VALUE;
+            int min = Integer.MAX_VALUE;
             for (int j = 0; j < matrix.length; j++) {
-                if (matrix[i][j] < currentRowMin) {
-                    currentRowMin = matrix[i][j];
+                int e = matrix[i][j];
+                if (e < min) {
+                    min = e;
                 }
             }
 
-            // subtract min value from each element of the current row
+            if (min == 0) continue; // We don't need to subtract 0
+
+            // Subtract the current min element found to the current row
             for (int k = 0; k < matrix[i].length; k++) {
-                matrix[i][k] -= currentRowMin;
+                matrix[i][k] -= min;
             }
         }
 
-        // cols
+        // Find min element from each column
         for (int i = 0; i < matrix.length; i++) {
-            // find the min value of the current column
-            int currentColMin = Integer.MAX_VALUE;
+            int min = Integer.MAX_VALUE;
             for (int[] ints : matrix) {
-                if (ints[i] < currentColMin) {
-                    currentColMin = ints[i];
+                if (ints[i] < min) {
+                    min = ints[i];
                 }
             }
-            // subtract min value from each element of the current column
+
+            if (min == 0) continue; // We don't need to subtract 0
+
+            // Subtract the current min element found to the current column
             for (int k = 0; k < matrix.length; k++) {
-                matrix[k][i] -= currentColMin;
+                matrix[k][i] -= min;
             }
         }
     }
 
     /**
-     * Mark each 0 with a "square", if there are no other marked zeroes in the same row or column
+     * Cover the zero elements of the matrix with the minimum number of lines
+     * If the number of lines is equal to the number of rows, then an optimal solution is found
      */
-    private void zeroCover() {
-        boolean[] rowHasSquare = new boolean[n];
-        boolean[] colHasSquare = new boolean[n];
+    private void coverZeros() {
+        boolean[] rowCovered = new boolean[n];
+        boolean[] colCovered = new boolean[n];
 
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix.length; j++) {
-                
-                // mark if current value == 0 & there are no other marked zeroes in the same row or column
-                if (matrix[i][j] == 0 && !rowHasSquare[i] && !colHasSquare[j]) {
-                    rowHasSquare[i] = true;
-                    colHasSquare[j] = true;
-                    squareInRow[i] = j; // save the row-position of the zero
-                    squareInCol[j] = i; // save the column-position of the zero
+                // star the first zero element found in each row and column
+                if (matrix[i][j] == 0 && !rowCovered[i] && !colCovered[j]) {
+                    rowCovered[i] = true;
+                    colCovered[j] = true;
+                    zerosInRow[i] = j; // Save the position of the zero in the row
+                    zerosInColumn[j] = i; // Save the position of the zero in the column
                 }
             }
         }
+
+        checkColumnsWithZero();
     }
 
     /**
-     * Cover all columns which are marked with a "square"
+     * Check which columns have a starred zero in it
+     * If all of them have one, we finish.
      */
     private void checkColumnsWithZero() {
-        for (int i = 0; i < squareInCol.length; i++) {
-            colIsCovered[i] = squareInCol[i] != -1 ? 1 : 0;
+        for (int i = 0; i < zerosInColumn.length; i++) {
+            if (zerosInColumn[i] != -1) {
+                colIsCovered[i] = !colIsCovered[i];
+            }
         }
     }
 
     /**
-     * Find zero value Z0 and mark it as "0".
+     * Find a non-covered zero in a non-covered row and column and prime it
      *
-     * @return position of Z0 in the matrix
+     * @return position of the primed zero in the matrix
      */
-    private int[] zZeroMark() {
+    private Pair<Integer, Integer> primeZero() {
         for (int i = 0; i < matrix.length; i++) {
-            if (rowIsCovered[i] == 0) {
+            if (!rowIsCovered[i]) {
                 for (int j = 0; j < matrix[i].length; j++) {
-                    if (matrix[i][j] == 0 && colIsCovered[j] == 0) {
-                        staredZeroesInRow[i] = j; // mark as 0*
-                        return new int[]{i, j};
+                    if (!colIsCovered[j]) {
+                        if (matrix[i][j] == 0) {
+                            starredZeroesInRow[i] = j; // mark as temporal star
+                            return new Pair<>(i, j);
+                        }
                     }
                 }
             }
@@ -174,25 +191,25 @@ public class HungarianAlgorithm {
     }
 
     /**
-     * Create a chain K of alternating "squares" and "0*"
+     * Create a chain K of alternating primed and starred zeros
      *
-     * @param mainZero => Z0
+     * @param primedZero primedZero
      */
-    private void kChain(int[] mainZero) {
+    private void kChain(Pair<Integer, Integer> primedZero) {
         int i;
-        int j = mainZero[1];
+        int j = primedZero.getSecond();
 
-        Set<int[]> K = new LinkedHashSet<>();
+        Set<Pair<Integer, Integer>> K = new LinkedHashSet<>();
         // add Z0 to K
-        K.add(mainZero);
+        K.add(primedZero);
 
         boolean found = true;
         while (found) {
             // as long as no new "square" marks are found
             // add Z1 to K if
             // there is a zero Z1 which is marked with a "square " in the column of Z0
-            if (squareInCol[j] != -1) {
-                K.add(new int[]{squareInCol[j], j});
+            if (zerosInColumn[j] != -1) {
+                K.add(new Pair<>(zerosInColumn[j], j));
             } else {
                 found = false;
             }
@@ -203,49 +220,49 @@ public class HungarianAlgorithm {
             }
 
             // replace Z0 with the 0 in the row of Z1
-            i = squareInCol[j];
-            j = staredZeroesInRow[i];
+            i = zerosInColumn[j];
+            j = starredZeroesInRow[i];
             // add the new Z0 to K
             if (j != -1) {
-                K.add(new int[]{i, j});
+                K.add(new Pair<>(i, j));
             } else {
                 found = false;
             }
         }
 
-        for (int[] zero : K) {
+        for (Pair<Integer, Integer> z : K) {
             // remove all "square" marks in K
-            if (squareInCol[zero[1]] == zero[0]) {
-                squareInCol[zero[1]] = -1;
-                squareInRow[zero[0]] = -1;
+            if (zerosInColumn[z.getSecond()] == z.getFirst()) {
+                zerosInColumn[z.getSecond()] = -1;
+                zerosInRow[z.getFirst()] = -1;
             }
             // replace the 0 marks in K with "square" marks
-            if (staredZeroesInRow[zero[0]] == zero[1]) {
-                squareInRow[zero[0]] = zero[1];
-                squareInCol[zero[1]] = zero[0];
+            if (starredZeroesInRow[z.getFirst()] == z.getSecond()) {
+                zerosInRow[z.getFirst()] = z.getSecond();
+                zerosInColumn[z.getSecond()] = z.getFirst();
             }
         }
 
         // remove all marks
-        Arrays.fill(staredZeroesInRow, -1);
-        Arrays.fill(rowIsCovered, 0);
-        Arrays.fill(colIsCovered, 0);
+        Arrays.fill(starredZeroesInRow, -1);
+        Arrays.fill(rowIsCovered, false);
+        Arrays.fill(colIsCovered, false);
     }
 
     /**
-     * 1. Find the smallest uncovered value in the matrix.
+     * In order to simplify the steps, we do the followin:
+     * 1. Find the smallest uncovered value in the matrix
      * 2. Subtract it from all uncovered values
      * 3. Add it to all twice-covered values
      */
     private void subtractMinimum() {
-        // Find the smallest uncovered value in the matrix
         int minUncoveredValue = Integer.MAX_VALUE;
         for (int i = 0; i < matrix.length; i++) {
-            if (rowIsCovered[i] == 1) {
+            if (rowIsCovered[i]) {
                 continue;
             }
             for (int j = 0; j < matrix[0].length; j++) {
-                if (colIsCovered[j] == 0 && matrix[i][j] < minUncoveredValue) {
+                if (!colIsCovered[j] && matrix[i][j] < minUncoveredValue) {
                     minUncoveredValue = matrix[i][j];
                 }
             }
@@ -254,15 +271,51 @@ public class HungarianAlgorithm {
         if (minUncoveredValue > 0) {
             for (int i = 0; i < matrix.length; i++) {
                 for (int j = 0; j < matrix[0].length; j++) {
-                    if (rowIsCovered[i] == 1 && colIsCovered[j] == 1) {
-                        // Add min to all twice-covered values
+                    if (rowIsCovered[i] && colIsCovered[j]) {
                         matrix[i][j] += minUncoveredValue;
-                    } else if (rowIsCovered[i] == 0 && colIsCovered[j] == 0) {
-                        // Subtract min from all uncovered values
+                    } else if (!rowIsCovered[i] && !colIsCovered[j]) {
                         matrix[i][j] -= minUncoveredValue;
                     }
                 }
             }
         }
+    }
+
+    private void checkIfSquared(int[][] matrix) {
+        if (matrix.length == matrix[0].length) {
+            // Matrix is squared;
+            this.matrix = matrix;
+            return;
+        }
+
+        int max = 0;
+        for (int[] ints : matrix) {
+            for (int e : ints) {
+                if (e > max) max = e;
+            }
+        }
+
+        int rows;
+        int cols;
+        if (matrix.length > matrix[0].length) {
+            rows = matrix.length;
+            cols = matrix.length;
+        } else {
+            rows = matrix[0].length;
+            cols = matrix[0].length;
+        }
+
+        int[][] newMatrix = new int[rows][cols];
+        for (int i = 0; i < newMatrix.length; ++i) {
+            for (int j = 0; j < newMatrix[0].length; ++j) {
+                if (i < matrix.length && j < matrix[0].length) {
+                    newMatrix[i][j] = matrix[i][j];
+                } else {
+                    newMatrix[i][j] = max;
+                }
+            }
+        }
+
+        this.matrix = newMatrix;
     }
 }
