@@ -21,6 +21,7 @@ public class QAP {
         this.n = n;
         this.distanceMatrix = distanceMatrix;
         this.flowMatrix = flowMatrix;
+        //greedyInit(currentBestAssignment);
         greedyInit(currentBestAssignment);
     }
 
@@ -43,6 +44,8 @@ public class QAP {
 
         shuffle(assigment);
         computeCost(assigment);
+
+        currentBestAssignment = assigment;
 
         System.out.println("Initial solution: " + Arrays.toString(assigment) + " with cost " + currentBestCost);
     }
@@ -129,6 +132,26 @@ public class QAP {
                         usedLoc[iD] = true;
                         usedElem[iF] = true;
                     }
+                    else {
+                        int i = index + 1;
+                        boolean found = false;
+                        int ni = 0;
+                        while (i < n - 1 && !found) {
+                            Map.Entry<Pair<Integer, Integer>, Integer> newP = distList.get(i); // Position with the lowest cost
+                            ni = newP.getKey().getFirst();
+
+                            if (!usedLoc[ni]) {
+                                found = true;
+                            } else {
+                                ++i;
+                            }
+                        }
+                        if (i <= n - 1) {
+                            assigment[ni] = iF;
+                            usedLoc[ni] = true;
+                            usedElem[iF] = true;
+                        }
+                    }
                 }
 
                 if (!usedLoc[jF]) {
@@ -136,6 +159,25 @@ public class QAP {
                         assigment[jD] = jF;
                         usedLoc[jD] = true;
                         usedElem[jF] = true;
+                    } else {
+                        int i = index + 1;
+                        boolean found = false;
+                        int ni = 0;
+                        while (i < n - 1 && !found) {
+                            Map.Entry<Pair<Integer, Integer>, Integer> newP = distList.get(i); // Position with the lowest cost
+                            ni = newP.getKey().getFirst();
+
+                            if (!usedLoc[ni]) {
+                                found = true;
+                            } else {
+                                ++i;
+                            }
+                        }
+                        if (i < n - 1) {
+                            assigment[ni] = jF;
+                            usedLoc[ni] = true;
+                            usedElem[jF] = true;
+                        }
                     }
                 }
             }
@@ -151,6 +193,7 @@ public class QAP {
         }
 
         Utils.printArray(assigment);
+        currentBestAssignment = assigment;
         computeCost(assigment);
     }
 
@@ -167,7 +210,7 @@ public class QAP {
         array[j] = aux;
     }
 
-    private void computeCost(int[] assigment) {
+    private double computeCost(int[] assigment) {
         currentBestCost = 0;
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
@@ -175,6 +218,8 @@ public class QAP {
                 currentBestCost += distanceMatrix[i][j] * flowMatrix[assigment[i]][assigment[j]];
             }
         }
+
+        return currentBestCost;
     }
 
     public int getCurrentBestCost() {
@@ -219,10 +264,19 @@ public class QAP {
 
                     int costIncrease = 0;
 
+                    boolean next = false;
                     for (int j = 0; j < currentSize; ++j) {
                         costIncrease += distanceMatrix[currentSize][j] * flowMatrix[i][currentAssigment[j]];
                         costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j]][i];
+
+                        if (currentCost + costIncrease > currentBestCost) {
+                            alreadyInAssignment[i] = false;
+                            next = true;
+                            break;
+                        }
                     }
+
+                    if (next) continue;
 
                     treeExploration(currentCost + costIncrease, currentSize + 1, currentAssigment, alreadyInAssignment);
 
@@ -312,5 +366,40 @@ public class QAP {
         int lap = hungarianAlgorithm.compute();
 
         return currentCost + lap;
+    }
+
+    private void hillClimbing() {
+        currentBestCost = 0;
+        int[] assigment = new int[n];
+
+        for (int i = 0; i < n; ++i) {
+            assigment[i] = i;
+        }
+
+        shuffle(assigment);
+        computeCost(assigment);
+        currentBestAssignment = assigment;
+
+        System.out.println("Initial solution: " + Arrays.toString(assigment) + " with cost " + currentBestCost);
+        int i = 0;
+        while (i < n * n) {
+            int[] newSolution = generateNeighbor(assigment);
+            int newCost = (int) computeCost(newSolution);
+
+            if (newCost < currentBestCost) {
+                assigment = newSolution.clone();
+                currentBestCost = newCost;
+            }
+            ++i;
+        }
+    }
+
+    private int[] generateNeighbor(int[] solution) {
+        int[] newSolution = solution.clone();
+        int index1 = (int) (Math.random() * solution.length);
+        int index2 = (int) (Math.random() * solution.length);
+
+        swap(newSolution, index1, index2);
+        return newSolution;
     }
 }

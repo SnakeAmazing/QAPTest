@@ -1,6 +1,7 @@
 package me.lluis.qaptest;
 
 import me.lluis.qaptest.algorithms.BranchAndBound;
+import me.lluis.qaptest.algorithms.specific.HA;
 import me.lluis.qaptest.algorithms.specific.SKBranchAndBound;
 import me.lluis.qaptest.input.FileInput;
 import me.lluis.qaptest.input.Input;
@@ -20,16 +21,59 @@ public class Main {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
 
     public static void main(String[] args) {
-        //solveQAP();
-        //solveQAP2();
-        solveSKQAP();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Choose an option:");
+        System.out.println("1. QAP");
+        System.out.println("2. SKQAP");
+        System.out.println("3. New QAP");
+        System.out.println("4. Test Hungarian");
+        System.out.println("5. Exit");
+        int option = scanner.nextInt();
+
+        switch (option) {
+            case 1:
+                solveQAP();
+                break;
+            case 2:
+                solveSKQAP();
+                break;
+            case 3:
+                solveQAP2();
+                break;
+            case 4:
+                testHungarian();
+                break;
+            case 5:
+                System.exit(0);
+                break;
+        }
+    }
+
+    private static void testHungarian() {
+        int n = 4;
+        /*int[][] matrix = new int[][] {
+                {21, 34, 31, 43},
+                {20, 35, 32, 44},
+                {20, 34, 33, 45},
+                {21, 34, 31, 43}
+        };*/
+        int[][] matrix = new int[][] {
+                {1, 0, 1, 1},
+                {1, 0, 1, 0},
+                {0, 1, 0, 1},
+                {1, 0, 1, 0}
+        };
+
+        HA ha = new HA(n, matrix);
+        ha.solve();
     }
 
     private static void solveQAP2() {
         int n;
         int[][] distances;
         int[][] flows;
-        try (Scanner scanner = new Scanner(new File("resources/chr12a.txt"))) {
+        try (Scanner scanner = new Scanner(new File("resources/chr18.txt"))) {
             n = scanner.nextInt();
 
             distances = new int[n][n];
