@@ -152,10 +152,10 @@ public class BranchAndBound {
                 g[i][j] = flowMapping[i] * distanceMapping[j] + min[i][j];
         }
 
-        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g);
-        int lap = hungarianAlgorithm.compute();
+        //HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g);
+        //int lap = hungarianAlgorithm.compute();
 
-        return currentCost + lap;
+        return currentCost + 0;
     }
 
     private void generateInitialSolution() {

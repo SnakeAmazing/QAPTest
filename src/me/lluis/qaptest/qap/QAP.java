@@ -1,6 +1,6 @@
 package me.lluis.qaptest.qap;
 
-import me.lluis.qaptest.algorithms.HungarianAlgorithm;
+import me.lluis.qaptest.algorithms.specific.HungarianAlgorithm;
 import me.lluis.qaptest.object.Pair;
 import me.lluis.qaptest.util.Utils;
 
@@ -22,7 +22,7 @@ public class QAP {
         this.distanceMatrix = distanceMatrix;
         this.flowMatrix = flowMatrix;
         //greedyInit(currentBestAssignment);
-        greedyInit(currentBestAssignment);
+        generateInitialSolution(currentBestAssignment);
     }
 
     public void solve() {
@@ -46,6 +46,8 @@ public class QAP {
         computeCost(assigment);
 
         currentBestAssignment = assigment;
+
+        hillClimbing();
 
         System.out.println("Initial solution: " + Arrays.toString(assigment) + " with cost " + currentBestCost);
     }
@@ -192,7 +194,7 @@ public class QAP {
             }
         }
 
-        Utils.printArray(assigment);
+        Utils.print(assigment);
         currentBestAssignment = assigment;
         computeCost(assigment);
     }
@@ -264,19 +266,19 @@ public class QAP {
 
                     int costIncrease = 0;
 
-                    boolean next = false;
+                    //boolean next = false;
                     for (int j = 0; j < currentSize; ++j) {
                         costIncrease += distanceMatrix[currentSize][j] * flowMatrix[i][currentAssigment[j]];
-                        costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j]][i];
+                        //costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j]][i];
 
-                        if (currentCost + costIncrease > currentBestCost) {
+                        /*if (currentCost + costIncrease > currentBestCost) {
                             alreadyInAssignment[i] = false;
                             next = true;
                             break;
-                        }
+                        }*/
                     }
 
-                    if (next) continue;
+                    //if (next) continue;
 
                     treeExploration(currentCost + costIncrease, currentSize + 1, currentAssigment, alreadyInAssignment);
 
@@ -362,36 +364,29 @@ public class QAP {
                 g[i][j] = flowMapping[i] * distanceMapping[j] + min[i][j];
         }
 
-        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g);
-        int lap = hungarianAlgorithm.compute();
+        //HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g.length, g);
+        //hungarianAlgorithm.solve();
+        //int lap = hungarianAlgorithm.getBestCost();
 
-        return currentCost + lap;
+        return currentCost;
     }
 
     private void hillClimbing() {
-        currentBestCost = 0;
-        int[] assigment = new int[n];
+        int[] best = currentBestAssignment.clone();
 
-        for (int i = 0; i < n; ++i) {
-            assigment[i] = i;
-        }
-
-        shuffle(assigment);
-        computeCost(assigment);
-        currentBestAssignment = assigment;
-
-        System.out.println("Initial solution: " + Arrays.toString(assigment) + " with cost " + currentBestCost);
-        int i = 0;
-        while (i < n * n) {
-            int[] newSolution = generateNeighbor(assigment);
+        int i = n * n;
+        while (i > 0) {
+            int[] newSolution = generateNeighbor(best);
             int newCost = (int) computeCost(newSolution);
 
             if (newCost < currentBestCost) {
-                assigment = newSolution.clone();
+                best = newSolution.clone();
                 currentBestCost = newCost;
             }
-            ++i;
+            --i;
         }
+
+        currentBestAssignment = best.clone();
     }
 
     private int[] generateNeighbor(int[] solution) {

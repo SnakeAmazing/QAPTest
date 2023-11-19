@@ -1,9 +1,7 @@
 package me.lluis.qaptest.algorithms.specific;
 
-import me.lluis.qaptest.algorithms.HungarianAlgorithm;
 import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.object.CharPair;
-import me.lluis.qaptest.util.Utils;
 
 import java.util.*;
 
@@ -59,14 +57,11 @@ public class SKBranchAndBound {
         char[] currentAssignment = new char[n];
         boolean[] alreadyInAssignment = new boolean[n];
 
-        //Utils.printMatrix(distanceMatrix);
-        //Utils.printMatrix(flowMatrix);
-
         System.out.println(Arrays.toString(currentBestAssignment));
         System.out.println("Cost = " + currentBestCost);
 
         System.out.println("\nStarting computation...");
-        //treeExploration(0, 0, currentAssignment, alreadyInAssignment);
+        treeExploration(0, 0, currentAssignment, alreadyInAssignment);
     }
 
     /**
@@ -123,7 +118,7 @@ public class SKBranchAndBound {
             double lowerBound = 0;
             boolean lowerBoundEvaluated = false;
 
-            if (currentSize < n - 1) {
+            if (currentSize < n - 12) {
                 lowerBound = computeLowerBound(currentSize, alreadyInAssignment, currentCost);
                 lowerBoundEvaluated = true;
             }
@@ -235,8 +230,9 @@ public class SKBranchAndBound {
             }
         }
 
-        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g);
-        int cost = hungarianAlgorithm.compute();
+        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g.length, g);
+        hungarianAlgorithm.solve();
+        int cost = hungarianAlgorithm.getBestCost();
 
         return currentCost + cost;
     }
@@ -293,10 +289,11 @@ public class SKBranchAndBound {
                 if (c == c2) continue;
 
                 CharPair pair = new CharPair(c, c2);
+                int wordFreq = wordFrequencies.get(word) / 100;
                 if (pairFrequencies.containsKey(pair)) {
-                    pairFrequencies.put(pair, pairFrequencies.get(pair) + 1);
+                    pairFrequencies.put(pair, pairFrequencies.get(pair) + Math.max(1, wordFreq));
                 } else {
-                    pairFrequencies.put(pair, 1);
+                    pairFrequencies.put(pair, Math.max(1, wordFreq));
                 }
             }
         }
