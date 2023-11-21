@@ -1,15 +1,19 @@
 package me.lluis.qaptest;
 
 import me.lluis.qaptest.algorithms.BranchAndBound;
+import me.lluis.qaptest.algorithms.SimulatedAnnealing;
 import me.lluis.qaptest.algorithms.specific.HungarianAlgorithm;
 import me.lluis.qaptest.algorithms.specific.SKBranchAndBound;
 import me.lluis.qaptest.input.Input;
 import me.lluis.qaptest.input.ManualInput;
+import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.qap.QAP;
 import me.lluis.qaptest.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -20,6 +24,11 @@ public class Main {
     private static final Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
 
     public static void main(String[] args) {
+        String test = "hola - adios - á à é è í ï ó ò ú ü ñ ç";
+        System.out.println(test);
+        test = Normalizer.normalize(test, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "").replaceAll("-", "");
+        System.out.println(test);
+
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Choose an option:");
@@ -44,9 +53,25 @@ public class Main {
                 testHungarian();
                 break;
             case 5:
+                testAnnealing();
+                break;
+            case 6:
+                textToMatrix();
+                break;
+            case 7:
                 System.exit(0);
                 break;
         }
+    }
+
+    private static void testAnnealing() {
+        Map<String, Integer> wordFrequencies = new HashMap<>();
+        Input input = new ManualInput(wordFrequencies);
+        input.computeFrequencies();
+
+        SimulatedAnnealing simulatedAnnealing = new SimulatedAnnealing(6, 6, wordFrequencies, Alphabet.latinAlphabet());
+        simulatedAnnealing.solve();
+        System.out.println(Arrays.toString(simulatedAnnealing.getCurrentBestAssignment()));
     }
 
     private static void testHungarian() {
@@ -115,7 +140,7 @@ public class Main {
         int n;
         int[][] distances;
         int[][] flows;
-        try (Scanner scanner = new Scanner(new File("resources/chr20b.txt"))) {
+        try (Scanner scanner = new Scanner(new File("resources/tai12a.txt"))) {
             n = scanner.nextInt();
 
             distances = new int[n][n];
@@ -142,13 +167,20 @@ public class Main {
         qap.solve();
         long end = System.currentTimeMillis();
 
-        int[] bestAssignment = qap.getCurrentBestAssignment();
+        int[] bestAssignment = qap.getUnOfficialCurrentBestAssignment();
         int cost = qap.getCurrentBestCost();
 
         System.out.println("The best solution is: ");
         for (int i = 0; i < n; ++i) {
             System.out.print(bestAssignment[i] + 1 + " ");
         }
+        System.out.println();
+
+        char[] bestAssignment2 = qap.getCurrentBestAssigment();
+        for (int i = 0; i < n; ++i) {
+            System.out.print(bestAssignment2[i] + " ");
+        }
+
         System.out.println("\nWith cost: " + cost);
 
         System.out.println("Time elapsed: " + (end - begin) + "ms");
@@ -218,5 +250,36 @@ public class Main {
         System.out.println("\nWith cost: " + cost);
 
         System.out.println("Time elapsed: " + (end - begin) + "ms");
+    }
+
+    private static void textToMatrix() {
+        int n;
+        int[][] distances;
+        int[][] flows;
+        try (Scanner scanner = new Scanner(new File("resources/tai12a.txt"))) {
+            n = scanner.nextInt();
+
+            distances = new int[n][n];
+            flows = new int[n][n];
+
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    distances[i][j] = scanner.nextInt();
+                }
+            }
+
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    flows[i][j] = scanner.nextInt();
+                }
+            }
+
+            System.out.println("Distances:");
+            Utils.print(distances);
+            System.out.println("Flows:");
+            Utils.print(flows);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

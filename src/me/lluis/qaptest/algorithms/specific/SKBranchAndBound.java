@@ -2,12 +2,13 @@ package me.lluis.qaptest.algorithms.specific;
 
 import me.lluis.qaptest.object.Alphabet;
 import me.lluis.qaptest.object.CharPair;
+import me.lluis.qaptest.util.Utils;
 
 import java.util.*;
 
 public class SKBranchAndBound {
 
-    private final List<Character> letters = Alphabet.latinAlphabet();
+    private final List<Character> letters = Alphabet.reduced();
 
     private final int n;
     private final int realRows;
@@ -15,10 +16,10 @@ public class SKBranchAndBound {
     private final int rows;
     private final int cols;
 
-    private double[][] distanceMatrix;
+    private int[][] distanceMatrix;
     private int[][] flowMatrix;
 
-    private char[] currentBestAssignment;
+    private int[] currentBestAssignment;
     private double currentBestCost;
 
     private final Map<String, Integer> wordFrequencies;
@@ -54,7 +55,7 @@ public class SKBranchAndBound {
      * Stores the best assigment found in currentBestAssignment
      */
     public void solve() {
-        char[] currentAssignment = new char[n];
+        int[] currentAssignment = new int[n];
         boolean[] alreadyInAssignment = new boolean[n];
 
         System.out.println(Arrays.toString(currentBestAssignment));
@@ -68,7 +69,7 @@ public class SKBranchAndBound {
      * Creates the distance matrix
      */
     private void createDistanceMatrix() {
-        distanceMatrix = new double[n][n];
+        distanceMatrix = new int[n][n];
 
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
@@ -88,19 +89,21 @@ public class SKBranchAndBound {
                 double B = 10 / 49.0;
                 double movement = B * Math.log((euclideanDistance / keySize) + 1) / Math.log(2);
 
-                distanceMatrix[i][j] = movement;
+                System.out.println(movement);
+                distanceMatrix[i][j] = (int) (movement * 10);
             }
         }
     }
 
     /**
      * Explores the tree of possible solutions
-     * @param currentCost the cost of the current solution
-     * @param currentSize the size of the current solution
-     * @param currentAssigment the current solution
+     *
+     * @param currentCost         the cost of the current solution
+     * @param currentSize         the size of the current solution
+     * @param currentAssigment    the current solution
      * @param alreadyInAssignment an array of booleans that indicates if a letter is already in the current solution
      */
-    private void treeExploration(double currentCost, int currentSize, char[] currentAssigment, boolean[] alreadyInAssignment) {
+    private void treeExploration(int currentCost, int currentSize, int[] currentAssigment, boolean[] alreadyInAssignment) {
         if (currentSize == n) {
             if (currentCost < currentBestCost) {
                 currentBestCost = currentCost;
@@ -109,7 +112,7 @@ public class SKBranchAndBound {
             }
         } else if (currentSize == 0) {
             for (int i = 0; i < n; ++i) {
-                currentAssigment[0] = letters.get(i);
+                currentAssigment[0] = i;
                 alreadyInAssignment[i] = true;
                 treeExploration(0, 1, currentAssigment, alreadyInAssignment);
                 alreadyInAssignment[i] = false;
@@ -133,10 +136,10 @@ public class SKBranchAndBound {
                     currentAssigment[currentSize] = letters.get(i);
                     alreadyInAssignment[i] = true;
 
-                    double costIncrease = 0.0;
+                    int costIncrease = 0;
                     for (int j = 0; j < currentSize; ++j) {
-                        costIncrease += distanceMatrix[currentSize][j] * flowMatrix[i][currentAssigment[j] - 'A'];
-                        costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j] - 'A'][i];
+                        costIncrease += distanceMatrix[currentSize][j] * flowMatrix[i][currentAssigment[j]];
+                        costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j]][i];
                     }
 
                     treeExploration(currentCost + costIncrease, currentSize + 1, currentAssigment, alreadyInAssignment);
@@ -149,88 +152,89 @@ public class SKBranchAndBound {
 
     /**
      * Computes the Gilmore-Lawler lower bound of the current solution
-     * @param currentSize the size of the current solution
+     *
+     * @param currentSize         the size of the current solution
      * @param alreadyInAssignment an array of booleans that indicates if a letter is already in the current solution
-     * @param currentCost the cost of the current solution
+     * @param currentCost         the cost of the current solution
      * @return the lower bound of the current solution
      */
     private double computeLowerBound(int currentSize, boolean[] alreadyInAssignment, double currentCost) {
-        int remainingSize = n - currentSize;
-        double[][] tempDistanceMatrix = new double[remainingSize][remainingSize];
-        int[][] tempFlowMatrix = new int[remainingSize][remainingSize];
+        int m = n - currentSize;
 
-        double[] distance = new double[n];
-        int[] flow = new int[n];
+        int[] placed = new int[currentSize]; // indexes of the placed characters
+        int[] unplaced = new int[m]; // indexes of the unplaced characters
 
-        for (int i = 0; i < remainingSize; ++i) {
-            tempDistanceMatrix[i] = new double[remainingSize - 1];
-            tempFlowMatrix[i] = new int[remainingSize - 1];
+        int p = 0;
+        int u = 0;
+        for (int i = 0; i < alreadyInAssignment.length; ++i) {
+            if (alreadyInAssignment[i]) {
+                placed[p] = i;
+                ++p;
+            } else {
+                unplaced[u] = i;
+                ++u;
+            }
         }
 
-        int row = 0;
-        int col;
+        int[][] c1 = new int[m][m];
+        // We create c1
+        for (int i = 0; i < m; ++i) {
+            for (int k = 0; k < m; ++k) {
+                for (int j = 0; j < placed.length; ++j) {
+                    int d = distanceMatrix[currentSize + k][j];
+                    int f = distanceMatrix[unplaced[i]][placed[j]];
+                    c1[i][k] += d * f;
+                }
+            }
+        }
 
-        // C1
-        for (int i = currentSize; i < n; ++i) {
-            col = 0;
-            for (int j = currentSize; j < n; ++j) {
-                if (i != j) {
-                    tempDistanceMatrix[row][col] = distanceMatrix[i][j];
-                    ++col;
-                } else {
-                    distance[row] = distanceMatrix[i][j];
+        int[][] c2 = new int[m][m];
+        // We create c2
+        for (int i = 0; i < m; ++i) {
+            int pos = 0;
+            int[] flowAux = new int[m - 1];
+
+            for (int j = 0; j < m; ++j) {
+                if (j != i) {
+                    flowAux[pos] = flowMatrix[unplaced[i]][unplaced[j]];
+                    ++pos;
                 }
             }
 
-            Arrays.sort(tempDistanceMatrix[row]);
-            ++row;
-        }
+            Arrays.sort(flowAux);
 
-        row = 0;
-        for (int i = 0; i < n; ++i) {
-            if (alreadyInAssignment[i]) continue;
+            for (int k = 0; k < m; ++k) {
+                Integer[] distanceAux = new Integer[m - 1]; // We use boxed integer to use the reverse order comparator
+                pos = 0;
 
-            col = 0;
-            for (int j = 0; j < n; ++j) {
-                if (!alreadyInAssignment[j]) {
-                    if (i != j) {
-                        tempFlowMatrix[row][col] = flowMatrix[i][j];
-                        ++col;
-                    } else {
-                        flow[row] = flowMatrix[i][j];
+                for (int j = 0; j < m; ++j) {
+                    if (j != k) {
+                        distanceAux[pos] = distanceMatrix[currentSize + j][currentSize + k];
+                        ++pos;
                     }
                 }
-            }
 
-            Arrays.sort(tempFlowMatrix[row]); // CHECK THIS
-            ++row;
-        }
+                Arrays.sort(distanceAux, Collections.reverseOrder());
 
-        int[][] min = new int[remainingSize][remainingSize];
-        for (int i = 0; i < remainingSize; ++i) {
-            min[i] = new int[remainingSize];
-            Arrays.fill(min[i], 0);
-        }
-
-        // Let's build C2
-        for (int i = 0; i < remainingSize; ++i) {
-            for (int j = 0; j < remainingSize; ++j) {
-                for (int k = 0; k < remainingSize - 1; ++k) {
-                    min[i][j] += (int) (tempDistanceMatrix[j][k] * tempFlowMatrix[i][k]);
+                int prod = 0;
+                for (int j = 0; j < flowAux.length; ++j) {
+                    if (i != j) {
+                        prod += flowAux[j] * distanceAux[j];
+                    }
                 }
+
+                c2[i][k] = prod;
             }
         }
 
-        int[][] g = new int[remainingSize][remainingSize];
-        for (int i = 0; i < remainingSize; ++i) {
-            g[i] = new int[remainingSize];
-
-            for (int j = 0; j < remainingSize; ++j) {
-                g[i][j] = (int) (flow[i] * distance[j] + min[i][j]);
+        int[][] c = new int[m][m]; // C = C1 + C2
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < m; ++j) {
+                c[i][j] = c1[i][j] + c2[i][j];
             }
         }
 
-        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g.length, g);
+        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(m, c);
         hungarianAlgorithm.solve();
         int cost = hungarianAlgorithm.getBestCost();
 
@@ -239,40 +243,73 @@ public class SKBranchAndBound {
 
     private void generateInitialSolution() {
         currentBestCost = 0;
-        currentBestAssignment = new char[n];
+        currentBestAssignment = new int[n];
 
         for (int i = 0; i < n; ++i) {
             currentBestAssignment[i] = letters.get(i);
         }
 
         shuffle(currentBestAssignment);
-        computeCost();
+        Utils.print(distanceMatrix);
+        Utils.print(flowMatrix);
+        currentBestCost = computeCost(currentBestAssignment);
 
         System.out.println("Initial solution: " + Arrays.toString(currentBestAssignment) + " with cost " + currentBestCost);
+        hillClimbing();
     }
 
-    private void shuffle(char[] array) {
+    private void shuffle(int[] array) {
         int count = array.length;
         for (int i = count; i > 1; i--) {
             swap(array, i - 1, random.nextInt(i));
         }
     }
 
-    private void swap(char[] array, int i, int j) {
-        char aux = array[i];
+    private void swap(int[] array, int i, int j) {
+        int aux = array[i];
         array[i] = array[j];
         array[j] = aux;
     }
 
-    private void computeCost() {
+    private int computeCost(int[] assignment) {
+        int total = 0;
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
-                double cost = distanceMatrix[i][j];
-                int freq = flowMatrix[currentBestAssignment[i] - 'A'][currentBestAssignment[j] - 'A'];
+                int cost = distanceMatrix[i][j];
+                int freq = flowMatrix[assignment[i]][assignment[j]];
 
-                currentBestCost += cost * freq;
+                total += cost * freq;
             }
         }
+
+        return total;
+    }
+
+    private void hillClimbing() {
+        int[] best = currentBestAssignment.clone();
+
+        int i = n * n;
+        while (i > 0) {
+            int[] newSolution = generateNeighbor(best);
+            int newCost = computeCost(newSolution);
+
+            if (newCost < currentBestCost) {
+                best = newSolution.clone();
+                currentBestCost = newCost;
+            }
+            --i;
+        }
+
+        currentBestAssignment = best.clone();
+    }
+
+    private int[] generateNeighbor(int[] solution) {
+        int[] newSolution = solution.clone();
+        int index1 = (int) (Math.random() * solution.length);
+        int index2 = (int) (Math.random() * solution.length);
+
+        swap(newSolution, index1, index2);
+        return newSolution;
     }
 
     /**
@@ -286,7 +323,7 @@ public class SKBranchAndBound {
                 char c = word.charAt(i);
                 char c2 = word.charAt(i + 1);
 
-                if (c == c2) continue;
+                if (c == c2 || !letters.contains(c) || !letters.contains(c2)) continue;
 
                 CharPair pair = new CharPair(c, c2);
                 int wordFreq = wordFrequencies.get(word) / 100;
@@ -306,7 +343,13 @@ public class SKBranchAndBound {
     }
 
     public char[] getCurrentBestAssignment() {
-        return currentBestAssignment;
+        char[] res = new char[n];
+
+        for (int i = 0; i < n; ++i) {
+            res[i] = letters.get(currentBestAssignment[i]);
+        }
+
+        return res;
     }
 
     public double getCurrentBestCost() {

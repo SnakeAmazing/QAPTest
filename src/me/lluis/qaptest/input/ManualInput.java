@@ -1,5 +1,6 @@
 package me.lluis.qaptest.input;
 
+import java.text.Normalizer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
@@ -45,8 +46,7 @@ public class ManualInput implements Input {
         while (scanner.hasNext()) {
             String word = scanner.next();
 
-            if (!word.matches("^[a-zA-Z]+$")) continue;
-
+            normalize(word);
             word = word.toUpperCase();
 
             int frequency = scanner.nextInt();
@@ -62,12 +62,16 @@ public class ManualInput implements Input {
 
             if (Objects.equals(word, "eof")) break;
 
-            if (!word.matches("^[a-zA-Z]+$")) continue;
+            word = normalize(word);
 
             word = word.toUpperCase();
 
             if (frequencies.containsKey(word)) frequencies.put(word, frequencies.get(word) + 1);
             else frequencies.put(word, 1);
         }
+    }
+
+    private String normalize(String text) {
+        return Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
     }
 }

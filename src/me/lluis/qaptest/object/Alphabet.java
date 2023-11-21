@@ -12,8 +12,17 @@ public final class Alphabet {
             'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
     );
 
+    private static final List<Character> REDUCED = Arrays.asList(
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+        'J', 'K', 'L', 'M'
+    ); // 12
+
     public static List<Character> latinAlphabet() {
         return new ArrayList<>(BASE_ALPHABET);
+    }
+
+    public static List<Character> reduced() {
+        return new ArrayList<>(REDUCED);
     }
 
     public static List<Character> spanishAlphabet() {

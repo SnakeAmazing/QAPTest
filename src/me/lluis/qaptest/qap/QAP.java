@@ -1,12 +1,16 @@
 package me.lluis.qaptest.qap;
 
 import me.lluis.qaptest.algorithms.specific.HungarianAlgorithm;
-import me.lluis.qaptest.object.Pair;
-import me.lluis.qaptest.util.Utils;
+import me.lluis.qaptest.object.Alphabet;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 public class QAP {
+
+    private List<Character> characters = Alphabet.latinAlphabet();
 
     private final int n;
     private int[][] distanceMatrix;
@@ -21,7 +25,6 @@ public class QAP {
         this.n = n;
         this.distanceMatrix = distanceMatrix;
         this.flowMatrix = flowMatrix;
-        //greedyInit(currentBestAssignment);
         generateInitialSolution(currentBestAssignment);
     }
 
@@ -43,160 +46,13 @@ public class QAP {
         }
 
         shuffle(assigment);
-        computeCost(assigment);
+        currentBestCost = computeCost(assigment);
 
         currentBestAssignment = assigment;
 
         hillClimbing();
 
         System.out.println("Initial solution: " + Arrays.toString(assigment) + " with cost " + currentBestCost);
-    }
-
-    private void greedyInit(int[] assigment) {
-        assigment = new int[n];
-        Arrays.fill(assigment, -1);
-
-        Map<Pair<Integer, Integer>, Integer> distanceMap = new HashMap<>();
-        for (int i = 1; i < n; ++i) {
-            for (int j = 0; j < i; ++j) {
-                distanceMap.put(new Pair<>(i, j), distanceMatrix[i][j]);
-            }
-        }
-
-        List<Map.Entry<Pair<Integer, Integer>, Integer>> distList = distanceMap.entrySet().stream().toList(); // Ascending order
-
-        Map<Pair<Integer, Integer>, Integer> flowMap = new HashMap<>();
-        for (int i = 1; i < n; ++i) {
-            for (int j = 0; j < i; ++j) {
-                flowMap.put(new Pair<>(i, j), flowMatrix[i][j]);
-            }
-        }
-
-        List<Map.Entry<Pair<Integer, Integer>, Integer>> flowList = flowMap.entrySet().stream().sorted(Map.Entry.comparingByValue()).toList(); // Descending order
-
-        boolean[] usedLoc = new boolean[n];
-        boolean[] usedElem = new boolean[n];
-
-        boolean filled = false;
-        boolean remainPairs = true;
-
-        int index = 0;
-        while (index < n) {
-            Map.Entry<Pair<Integer, Integer>, Integer> entryFlow = flowList.get(index); // Position with the higher flow
-            int iF = entryFlow.getKey().getFirst();
-            int jF = entryFlow.getKey().getSecond();
-
-            Map.Entry<Pair<Integer, Integer>, Integer> entryDist = distList.get(index); // Position with the lowest cost
-            int iD = entryDist.getKey().getFirst();
-            int jD = entryDist.getKey().getSecond();
-
-            if (!usedElem[iF] && !usedElem[jF] && remainPairs) {
-                // Intentem posar-les juntes
-                if (!usedLoc[iD] && !usedLoc[jD]) {
-                    assigment[iD] = iF;
-                    assigment[jD] = jF;
-                    usedLoc[iD] = true;
-                    usedLoc[jD] = true;
-                    usedElem[iF] = true;
-                    usedElem[jF] = true;
-                    ++index;
-                } else {
-                    // Cerquem un parell de posicions lliures
-                    int i = index + 1;
-                    boolean found = false;
-                    int ni = 0;
-                    int nj = 0;
-                    while (i < n - 1 && !found) {
-                        Map.Entry<Pair<Integer, Integer>, Integer> newP = distList.get(i); // Position with the lowest cost
-                        ni = entryDist.getKey().getFirst();
-                        nj = entryDist.getKey().getSecond();
-
-                        if (!usedLoc[ni] && !usedLoc[nj]) {
-                            found = true;
-                        } else {
-                            ++i;
-                        }
-                    }
-                    if (i >= n - 1) remainPairs = false;
-                    else {
-                        assigment[ni] = iF;
-                        assigment[nj] = jF;
-                        usedLoc[ni] = true;
-                        usedLoc[nj] = true;
-                        usedElem[iF] = true;
-                        usedElem[jF] = true;
-                    }
-                }
-            } else {
-                if (!usedElem[iF]) {
-                    if (!usedLoc[iD]) {
-                        assigment[iD] = iF;
-                        usedLoc[iD] = true;
-                        usedElem[iF] = true;
-                    }
-                    else {
-                        int i = index + 1;
-                        boolean found = false;
-                        int ni = 0;
-                        while (i < n - 1 && !found) {
-                            Map.Entry<Pair<Integer, Integer>, Integer> newP = distList.get(i); // Position with the lowest cost
-                            ni = newP.getKey().getFirst();
-
-                            if (!usedLoc[ni]) {
-                                found = true;
-                            } else {
-                                ++i;
-                            }
-                        }
-                        if (i <= n - 1) {
-                            assigment[ni] = iF;
-                            usedLoc[ni] = true;
-                            usedElem[iF] = true;
-                        }
-                    }
-                }
-
-                if (!usedLoc[jF]) {
-                    if (!usedLoc[jD]) {
-                        assigment[jD] = jF;
-                        usedLoc[jD] = true;
-                        usedElem[jF] = true;
-                    } else {
-                        int i = index + 1;
-                        boolean found = false;
-                        int ni = 0;
-                        while (i < n - 1 && !found) {
-                            Map.Entry<Pair<Integer, Integer>, Integer> newP = distList.get(i); // Position with the lowest cost
-                            ni = newP.getKey().getFirst();
-
-                            if (!usedLoc[ni]) {
-                                found = true;
-                            } else {
-                                ++i;
-                            }
-                        }
-                        if (i < n - 1) {
-                            assigment[ni] = jF;
-                            usedLoc[ni] = true;
-                            usedElem[jF] = true;
-                        }
-                    }
-                }
-            }
-
-            ++index;
-        }
-
-        for (int i = 0; i < usedLoc.length; ++i) {
-            boolean b = usedLoc[i];
-            if (!b) {
-                assigment[i] = i;
-            }
-        }
-
-        Utils.print(assigment);
-        currentBestAssignment = assigment;
-        computeCost(assigment);
     }
 
     private void shuffle(int[] array) {
@@ -212,24 +68,32 @@ public class QAP {
         array[j] = aux;
     }
 
-    private double computeCost(int[] assigment) {
-        currentBestCost = 0;
+    private int computeCost(int[] assigment) {
+        int cost = 0;
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
                 //System.out.println("Adding (" + i + ", " + j + ") " + "(" + assigment[i] + ", " + assigment[j] + ") " + distanceMatrix[i][j] + " * " + flowMatrix[assigment[i]][assigment[j]]);
-                currentBestCost += distanceMatrix[i][j] * flowMatrix[assigment[i]][assigment[j]];
+                cost += distanceMatrix[i][j] * flowMatrix[assigment[i]][assigment[j]];
             }
         }
 
-        return currentBestCost;
+        return cost;
     }
 
     public int getCurrentBestCost() {
         return currentBestCost;
     }
 
-    public int[] getCurrentBestAssignment() {
+    public int[] getUnOfficialCurrentBestAssignment() {
         return currentBestAssignment;
+    }
+
+    public char[] getCurrentBestAssigment() {
+        char[] official = new char[n];
+        for (int i = 0; i < n; ++i) {
+            official[i] = characters.get(currentBestAssignment[i]);
+        }
+        return official;
     }
 
     private void treeExploration(int currentCost, int currentSize, int[] currentAssigment, boolean[] alreadyInAssignment) {
@@ -269,16 +133,9 @@ public class QAP {
                     //boolean next = false;
                     for (int j = 0; j < currentSize; ++j) {
                         costIncrease += distanceMatrix[currentSize][j] * flowMatrix[i][currentAssigment[j]];
-                        //costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j]][i];
+                        costIncrease += distanceMatrix[j][currentSize] * flowMatrix[currentAssigment[j]][i];
 
-                        /*if (currentCost + costIncrease > currentBestCost) {
-                            alreadyInAssignment[i] = false;
-                            next = true;
-                            break;
-                        }*/
                     }
-
-                    //if (next) continue;
 
                     treeExploration(currentCost + costIncrease, currentSize + 1, currentAssigment, alreadyInAssignment);
 
@@ -289,86 +146,86 @@ public class QAP {
     }
 
     private int computeLowerBound(int currentSize, boolean[] alreadyInAssignment, int currentCost) {
-        int remainingSize = n - currentSize;
-        int[][] tempDistanceMatrix = new int[remainingSize][remainingSize];
-        int[][] tempFlowMatrix = new int[remainingSize][remainingSize];
+        // C1
+        int m = n - currentSize;
 
-        int[] distanceMapping = new int[n];
-        int[] flowMapping = new int[n];
+        int[] placed = new int[currentSize];
+        int[] unplaced = new int[m];
 
-        for (int i = 0; i < remainingSize; ++i) {
-            tempDistanceMatrix[i] = new int[remainingSize - 1];
-            tempFlowMatrix[i] = new int[remainingSize - 1];
+        int p = 0;
+        int u = 0;
+        for (int i = 0; i < alreadyInAssignment.length; ++i) {
+            if (alreadyInAssignment[i]) {
+                placed[p] = i;
+                ++p;
+            } else {
+                unplaced[u] = i;
+                ++u;
+            }
         }
 
-        int row = 0;
-        int col;
-        for (int i = currentSize; i < n; ++i) {
-            col = 0;
+        int[][] c1 = new int[m][m];
+        for (int i = 0; i < m; ++i) {
+            for (int k = 0; k < m; ++k) {
+                for (int j = 0; j < placed.length; ++j) {
+                    int d = distanceMatrix[currentSize + k][j];
+                    int f = distanceMatrix[unplaced[i]][placed[j]];
+                    c1[i][k] += d * f;
+                }
+            }
+        }
 
-            for (int j = currentSize; j < n; ++j) {
-                if (i != j) {
-                    tempDistanceMatrix[row][col] = distanceMatrix[i][j];
-                    ++col;
-                } else {
-                    distanceMapping[row] = distanceMatrix[i][j];
+        int[][] c2 = new int[m][m];
+
+        for (int i = 0; i < m; ++i) {
+            int pos = 0;
+            int[] flowAux = new int[m - 1];
+
+            for (int j = 0; j < m; ++j) {
+                if (j != i) {
+                    flowAux[pos] = flowMatrix[unplaced[i]][unplaced[j]];
+                    ++pos;
                 }
             }
 
-            Arrays.sort(tempDistanceMatrix[row]); // CHECK THIS
-            ++row;
-        }
+            Arrays.sort(flowAux);
 
-        row = 0;
+            for (int k = 0; k < m; ++k) {
+                Integer[] distanceAux = new Integer[m - 1];
+                pos = 0;
 
-        for (int i = 0; i < n; ++i) {
-            if (alreadyInAssignment[i]) continue;
-
-            col = 0;
-
-            for (int j = 0; j < n; ++j) {
-                if (!alreadyInAssignment[j]) {
-                    if (i != j) {
-                        tempFlowMatrix[row][col] = flowMatrix[i][j];
-                        ++col;
-                    } else {
-                        flowMapping[row] = flowMatrix[i][j];
+                for (int j = 0; j < m; ++j) {
+                    if (j != k) {
+                        distanceAux[pos] = distanceMatrix[currentSize + j][currentSize + k];
+                        ++pos;
                     }
                 }
-            }
 
-            Arrays.sort(tempFlowMatrix[row]); // CHECK THIS
-            ++row;
-        }
+                Arrays.sort(distanceAux, Collections.reverseOrder());
 
-        int[][] min = new int[remainingSize][remainingSize];
-        for (int i = 0; i < remainingSize; ++i) {
-            min[i] = new int[remainingSize];
-            Arrays.fill(min[i], 0);
-        }
-
-        for (int i = 0; i < remainingSize; ++i) {
-            for (int j = 0; j < remainingSize; ++j) {
-                for (int k = 0; k < remainingSize - 1; ++k) {
-                    min[i][j] += tempDistanceMatrix[j][k] * tempFlowMatrix[i][k];
+                int prod = 0;
+                for (int j = 0; j < flowAux.length; ++j) {
+                    if (i != j) {
+                        prod += flowAux[j] * distanceAux[j];
+                    }
                 }
+
+                c2[i][k] = prod;
             }
         }
 
-        int[][] g = new int[remainingSize][remainingSize];
-
-        for (int i = 0; i < remainingSize; ++i) {
-            g[i] = new int[remainingSize];
-
-            for (int j = 0; j < remainingSize; ++j)
-                g[i][j] = flowMapping[i] * distanceMapping[j] + min[i][j];
+        int[][] c = new int[m][m];
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < m; ++j) {
+                c[i][j] = c1[i][j] + c2[i][j];
+            }
         }
 
-        //HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(g.length, g);
-        //hungarianAlgorithm.solve();
-        //int lap = hungarianAlgorithm.getBestCost();
+        HungarianAlgorithm hungarianAlgorithm = new HungarianAlgorithm(m, c);
+        hungarianAlgorithm.solve();
+        int cost = hungarianAlgorithm.getBestCost();
 
-        return currentCost;
+        return currentCost + cost;
     }
 
     private void hillClimbing() {
@@ -377,7 +234,7 @@ public class QAP {
         int i = n * n;
         while (i > 0) {
             int[] newSolution = generateNeighbor(best);
-            int newCost = (int) computeCost(newSolution);
+            int newCost = computeCost(newSolution);
 
             if (newCost < currentBestCost) {
                 best = newSolution.clone();
@@ -396,5 +253,13 @@ public class QAP {
 
         swap(newSolution, index1, index2);
         return newSolution;
+    }
+
+    public void setDistanceMatrix(int[][] distanceMatrix) {
+        this.distanceMatrix = distanceMatrix;
+    }
+
+    public void setFlowMatrix(int[][] flowMatrix) {
+        this.flowMatrix = flowMatrix;
     }
 }
