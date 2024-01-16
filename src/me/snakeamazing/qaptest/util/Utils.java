@@ -1,4 +1,4 @@
-package me.lluis.qaptest.util;
+package me.snakeamazing.qaptest.util;
 
 import java.util.Arrays;
 

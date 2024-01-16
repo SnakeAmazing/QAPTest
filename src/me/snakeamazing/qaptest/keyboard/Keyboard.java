@@ -1,4 +1,4 @@
-package me.lluis.qaptest.keyboard;
+package me.snakeamazing.qaptest.keyboard;
 
 import java.util.Map;
 

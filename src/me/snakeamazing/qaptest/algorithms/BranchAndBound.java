@@ -1,4 +1,4 @@
-package me.lluis.qaptest.algorithms;
+package me.snakeamazing.qaptest.algorithms;
 
 import java.util.Arrays;
 import java.util.Random;

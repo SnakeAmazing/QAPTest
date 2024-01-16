@@ -1,7 +1,7 @@
-package me.lluis.qaptest.qap;
+package me.snakeamazing.qaptest.qap;
 
-import me.lluis.qaptest.algorithms.specific.HungarianAlgorithm;
-import me.lluis.qaptest.object.Alphabet;
+import me.snakeamazing.qaptest.algorithms.specific.HungarianAlgorithm;
+import me.snakeamazing.qaptest.object.Alphabet;
 
 import java.util.Arrays;
 import java.util.Collections;

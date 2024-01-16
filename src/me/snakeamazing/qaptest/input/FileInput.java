@@ -1,4 +1,4 @@
-package me.lluis.qaptest.input;
+package me.snakeamazing.qaptest.input;
 
 import java.util.Map;
 

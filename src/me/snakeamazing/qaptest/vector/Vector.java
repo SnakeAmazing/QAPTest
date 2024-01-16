@@ -1,4 +1,4 @@
-package me.lluis.qaptest.vector;
+package me.snakeamazing.qaptest.vector;
 
 public class Vector {
     /**

@@ -1,8 +1,8 @@
-package me.lluis.qaptest.algorithms.specific;
+package me.snakeamazing.qaptest.algorithms.specific;
 
-import me.lluis.qaptest.object.Alphabet;
-import me.lluis.qaptest.object.CharPair;
-import me.lluis.qaptest.util.Utils;
+import me.snakeamazing.qaptest.object.Alphabet;
+import me.snakeamazing.qaptest.object.CharPair;
+import me.snakeamazing.qaptest.util.Utils;
 
 import java.util.*;
 

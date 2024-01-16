@@ -1,14 +1,14 @@
-package me.lluis.qaptest;
+package me.snakeamazing.qaptest;
 
-import me.lluis.qaptest.algorithms.BranchAndBound;
-import me.lluis.qaptest.algorithms.SimulatedAnnealing;
-import me.lluis.qaptest.algorithms.specific.HungarianAlgorithm;
-import me.lluis.qaptest.algorithms.specific.SKBranchAndBound;
-import me.lluis.qaptest.input.Input;
-import me.lluis.qaptest.input.ManualInput;
-import me.lluis.qaptest.object.Alphabet;
-import me.lluis.qaptest.qap.QAP;
-import me.lluis.qaptest.util.Utils;
+import me.snakeamazing.qaptest.algorithms.BranchAndBound;
+import me.snakeamazing.qaptest.algorithms.SimulatedAnnealing;
+import me.snakeamazing.qaptest.algorithms.specific.HungarianAlgorithm;
+import me.snakeamazing.qaptest.algorithms.specific.SKBranchAndBound;
+import me.snakeamazing.qaptest.input.Input;
+import me.snakeamazing.qaptest.input.ManualInput;
+import me.snakeamazing.qaptest.object.Alphabet;
+import me.snakeamazing.qaptest.qap.QAP;
+import me.snakeamazing.qaptest.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
